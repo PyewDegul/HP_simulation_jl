@@ -6,6 +6,7 @@ using DifferentialEquations
 using Plots
 using ModelingToolkit: t_nounits as t, D_nounits as D, @variables, @parameters, @named, @unpack, @mtkbuild
 using Symbolics
+using BenchmarkTools
 
 # HX_PHX 자료구조
 mutable struct Wall
@@ -117,7 +118,7 @@ end
 using CoolProp
 # CoolProp with MTK (Tabular / Consider to change into PINN)
  # ρ, T from P, h
-handle = CoolProp.AbstractState_factory("HEOS&BICUBIC", "R410A")
+const handle = CoolProp.AbstractState_factory("HEOS&BICUBIC", "R410A")
 function R410a_density(P, h)
     CoolProp.AbstractState_update(handle, CoolProp.get_input_pair_index("HmassP_INPUTS"), h, P)
     return CoolProp.AbstractState_keyed_output(handle, CoolProp.get_param_index("Dmass"))
@@ -523,7 +524,7 @@ tspan = (0.0, 10.0)
 prob = ODEProblem(sys, u0_map, tspan, guesses = guess_map)
 
 # Rodas5P -> QNDF, FBDF -> RadauIIA5 [Stiff ODE solvers]
-sol = solve(prob, Rodas5P(autodiff=false))
+@btime sol = solve(prob, Rodas5P(autodiff=false))
 # dt 최솟값
 
 sol_real=unpack_sys(sys, sol)
